@@ -1,9 +1,10 @@
 package actors
 
-import akka.actor.{ ActorRef, Props }
+import akka.actor.Props
 import buses.WorkResponseEventBus
 import events.{ WorkItemRequest, WorkItemResponse }
 import scala.util.control.NonFatal
+import logging.Markers._
 
 /**
  * Actor that generates work
@@ -21,7 +22,7 @@ class GeneratorActor(numWorkItems: Long,
   //the current position in the stream
   private var position = 0
 
-  log.info(s"Generator($id): started with $numWorkItems items")
+  logger.info(generationMarker,s"Generator($id): started with $numWorkItems items")
 
   override def receive: Receive = {
     //handle requests for work
@@ -32,13 +33,13 @@ class GeneratorActor(numWorkItems: Long,
                                         None,
                                         None,
                                         WorkItemResponse.generated)
-        log.info(s"Generator($id): published $workItem")
+        logger.info(generationMarker,s"Generator($id): published $workItem")
         //publish a new work item on the event bus
         workResponseEventBus.publish(workItem)
         position += 1
       } catch {
         case NonFatal(_) =>
-          log.info(s"Generator($id): stream consumed, publishing response")
+          logger.info(generationMarker,s"Generator($id): stream consumed, publishing response")
           workResponseEventBus.publish(
             WorkItemResponse(None,
                              Some(id),
@@ -49,7 +50,7 @@ class GeneratorActor(numWorkItems: Long,
           //required in instances where more than one generator exists
           //actors that have no more work, shouldn't be picking up
           //requests from the event bus.
-          log.info(s"Generator($id): removing self from pool")
+          logger.info(generationMarker,s"Generator($id): removing self from pool")
           context.stop(self)
       }
   }

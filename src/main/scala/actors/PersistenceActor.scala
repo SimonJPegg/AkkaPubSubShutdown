@@ -3,6 +3,7 @@ package actors
 import akka.actor.Props
 import buses.{ WorkRequestEventBus, WorkResponseEventBus }
 import events.{ WorkItemRequest, WorkItemResponse }
+import logging.Markers._
 
 /**
  * Actor that mocks persisting processed work to some 'store'
@@ -14,23 +15,23 @@ class PersistenceActor(requestBus: WorkRequestEventBus,
 
   val id: String = idFromPath(self.path)
 
-  log.info(s"Persistor($id) started")
+  logger.info(persistenceMarker,s"Persistor($id) started")
 
   //request our first batch of work
   val request = WorkItemRequest(WorkItemRequest.process)
-  log.info(s"Persistor($id): sending request: $request")
+  logger.info(persistenceMarker,s"Persistor($id): sending request: $request")
   requestBus.publish(request)
 
   override def receive: Receive = {
     //handle work items as the appear on the event bus
     case workItemResponse: WorkItemResponse
         if workItemResponse.processingStage.eq(WorkItemResponse.processed) =>
-      log.info(s"Persistor($id): received message: $workItemResponse")
+      logger.info(persistenceMarker,s"Persistor($id): received message: $workItemResponse")
       responseBus.publish(
         workItemResponse.copy(persistorId = Some(id),
                               processingStage = WorkItemResponse.persisted)
       )
-      log.info(s"Persistor($id): requesting more work")
+      logger.info(persistenceMarker,s"Persistor($id): requesting more work")
       val request = WorkItemRequest(WorkItemRequest.process)
       requestBus.publish(request)
     //log that we're done (for a given generator)
@@ -38,7 +39,7 @@ class PersistenceActor(requestBus: WorkRequestEventBus,
         if workItemResponse.processingStage.eq(
           WorkItemResponse.processingComplete
         ) =>
-      log.info(s"Persistor($id): all processed messages have been consumed")
+      logger.info(persistenceMarker,s"Persistor($id): all processed messages have been consumed")
   }
 }
 

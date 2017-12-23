@@ -23,12 +23,12 @@ object Main extends Logging {
     val numPersistors = config.getInt("app.persistors.count")
     val numWorkItems = config.getInt("app.generators.messages")
 
-    log.info(
+    logger.info(
       s"Started with $numGenerators generators, $numProcessors processors " +
       s"and $numPersistors persistors"
     )
 
-    log.info("Starting actor system")
+    logger.info("Starting actor system")
     val system = ActorSystem("AskSystem")
 
     //event bus for requesting work items
@@ -36,7 +36,7 @@ object Main extends Logging {
     //event bus for supplying work items
     val responseEventBus = new WorkResponseEventBus(numGenerators)
 
-    log.info("Instantiating actors")
+    logger.info("Instantiating actors")
     val reaper =
       system.actorOf(ReaperActor.props(config), "Reaper")
 
@@ -65,7 +65,7 @@ object Main extends Logging {
                                                  responseEventBus),
                      "deadLetterMonitor")
 
-    log.info("Subscribing actors to events")
+    logger.info("Subscribing actors to events")
     system.eventStream
       .subscribe(deadLetterMonitorActor, classOf[DeadLetter])
 
@@ -78,9 +78,9 @@ object Main extends Logging {
     responseEventBus.subscribe(persistors, WorkItemResponse.processingComplete)
     responseEventBus.subscribe(reaper, WorkItemResponse.persisted)
 
-    log.info("Processing")
+    logger.info("Processing")
     system.whenTerminated.wait()
-    log.info("Complete")
+    logger.info("Complete")
     System.exit(0)
   }
 }

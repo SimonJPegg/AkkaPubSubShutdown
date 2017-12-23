@@ -1,8 +1,9 @@
 package actors
 
-import akka.actor.{ ActorRef, Props }
+import akka.actor.Props
 import buses.{ WorkRequestEventBus, WorkResponseEventBus }
 import events.{ WorkItemRequest, WorkItemResponse }
+import logging.Markers._
 
 /**
  * Actor that simulates the processing of work items
@@ -14,20 +15,19 @@ class ProcessorActor(requestBus: WorkRequestEventBus,
 
   val id: String = idFromPath(self.path)
 
-  //register instantiation with the reaper
-  log.info(s"Processor($id) started")
+  logger.info(processingMarker,s"Processor($id) started")
 
   override def receive: Receive = {
     //pass any requests for more work up the chain
     case WorkItemRequest(WorkItemRequest.process) =>
-      log.info(s"Processor($id): received work request, passing up chain")
+      logger.info(s"Processor($id): received work request, passing up chain")
       requestBus.publish(WorkItemRequest(WorkItemRequest.generate))
     //process any work items that appear on the event bus
     case workItemResponse: WorkItemResponse
         if workItemResponse.processingStage.equals(
           WorkItemResponse.generated
         ) =>
-      log.info(
+      logger.info(processingMarker,
         s"Processor($id): recieved message $workItemResponse, processing"
       )
       responseBus.publish(
@@ -39,7 +39,7 @@ class ProcessorActor(requestBus: WorkRequestEventBus,
         if workItemResponse.processingStage.equals(
           WorkItemResponse.generationComplete
         ) =>
-      log.info(
+      logger.info(processingMarker,
         s"Processor($id): all generated messages have been consumed,forwarding message"
       )
       responseBus.publish(

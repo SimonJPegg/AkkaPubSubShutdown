@@ -3,6 +3,7 @@ package actors
 import akka.actor.{ DeadLetter, Props }
 import buses.{ WorkRequestEventBus, WorkResponseEventBus }
 import events.{ WorkItemRequest, WorkItemResponse }
+import logging.Markers._
 
 /**
  * Class for re-routing dead letters in the system
@@ -11,9 +12,10 @@ class DeadLetterRouterActor(workRequestEventBus: WorkRequestEventBus,
                             workResponseEventBus: WorkResponseEventBus)
     extends LoggingActor {
 
+
   def receive: Receive = {
     case deadLetter: DeadLetter =>
-      log.debug(
+      logger.info(deadLetterMarker,
         s"saw dead letter ${deadLetter.message}, from ${deadLetter.sender.path}"
       )
       //pop the event back on the bus

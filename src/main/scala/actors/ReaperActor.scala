@@ -4,7 +4,7 @@ package actors
 import akka.actor.Props
 import com.typesafe.config.Config
 import events.WorkItemResponse
-
+import logging.Markers._
 
 /**
  * Actor responsible for termination of the actor system
@@ -27,7 +27,7 @@ class ReaperActor(config: Config)
    * Terminate the actor system
    */
   def terminateSystem(): Unit = {
-    log.info("Terminating system")
+    logger.info(reaperMarker,"Terminating system")
     context.system.terminate()
   }
 
@@ -35,9 +35,9 @@ class ReaperActor(config: Config)
     //keep track of completed work items
     case workItem: WorkItemResponse
         if workItem.processingStage == WorkItemResponse.persisted =>
-      log.info(s"Got workItem: $workItem")
+      logger.info(reaperMarker,s"Got workItem: $workItem")
       messagesReceived += 1
-      log.info(
+      logger.info(reaperMarker,
         s"Messages processed: $messagesReceived " +
         s"(${messagesExpectedPerGenerator * generatorsCount} expected) "
       )
