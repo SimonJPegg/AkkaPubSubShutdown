@@ -1,11 +1,12 @@
 package logging
 
-import org.slf4j.{ Logger, LoggerFactory }
+import com.typesafe.scalalogging.Logger
+
 
 /**
  * Base trait for logging
  */
 trait Logging {
 
-  val logger: Logger = LoggerFactory.getLogger(this.getClass.getSimpleName)
+  val logger: Logger = Logger(this.getClass.getSimpleName)
 }
